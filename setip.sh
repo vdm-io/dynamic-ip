@@ -1,13 +1,4 @@
-#!/usr/bin/env bash
-set -e
-
-# Check for CI
-if [ "$CI" = "true" ] ; then
-        BRANCH=$CIRCLE_SHA1
-        echo "Testing commit: $BRANCH"
-else
-        BRANCH="master"
-fi
+#!/bin/bash
 
 # simple basic random
 function getKey () {
@@ -69,8 +60,8 @@ serverKey=$(<"$VDMHOME/ip.key")
 accessToke=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36"  --silent --data-urlencode "key=$serverKey" $VDMIPSERVER)
 
 if [[ "$accessToke" != "$TRUE" ]]; then
-	read -s -p "Please enter your VDM access key: " vdmAccessKey continue
-	echo
+	read -s -p "Please enter your VDM access key: " vdmAccessKey
+	echo ""
 	echo -n "One moment while we set your access to the VDM system..."
 	resultAccess=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36"  --silent --data-urlencode "trust=$vdmAccessKey" --data-urlencode  "key=$serverKey" $VDMIPSERVER)
 	if [[ "$resultAccess" != "$TRUE" ]]; then
