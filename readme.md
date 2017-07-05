@@ -2,6 +2,11 @@ Dynamic IP
 ============
 This script will update the VDM system with your dynamic IP. To run this script, use the following command (as root):
 
+First time use to setup permission as root:
+```
+bash <(wget -O -  https://raw.githubusercontent.com/vdm-io/dynamic-ip/master/setip.sh)
+```
+Once permission is set:
 ```
 curl -s https://raw.githubusercontent.com/vdm-io/dynamic-ip/master/setip.sh | bash
 ```
