@@ -13,11 +13,11 @@ VDMSCRIPT="https://raw.githubusercontent.com/vdm-io/dynamic-ip/$BRANCH/setip.sh"
 VDMIPSERVER="https://www.vdm.io/setip"
 
 # Require script to be run via sudo, but not as root
-if [[ $EUID -ne 0 ]]; then
-
-    echo "Script must be run with root privilages!"
-    exit 1
-fi
+#if [[ $EUID -ne 0 ]]; then
+#
+#    echo "Script must be run with root privilages!"
+#    exit 1
+#fi
 
 # Set cronjob without removing existing
 if [ -f $VDMHOME/vdmip.cron ]; then
