@@ -69,7 +69,7 @@ serverKey=$(<"$VDMHOME/ip.key")
 accessToke=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36"  --silent --data-urlencode "key=$serverKey" $VDMIPSERVER)
 
 if [[ "$accessToke" != "$TRUE" ]]; then
-	read -n 1 -s -p "Please enter your VDM access key: " vdmAccessKey
+	read -s -p "Please enter your VDM access key: " vdmAccessKey continue
 	echo
 	echo -n "One moment while we set your access to the VDM system..."
 	resultAccess=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36"  --silent --data-urlencode "trust=$vdmAccessKey" --data-urlencode  "key=$serverKey" $VDMIPSERVER)
