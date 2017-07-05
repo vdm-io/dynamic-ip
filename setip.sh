@@ -23,6 +23,7 @@ VDMIPSERVER="https://www.vdm.io/setip"
 
 # Require script to be run via sudo, but not as root
 if [[ $EUID -ne 0 ]]; then
+
     echo "Script must be run with root privilages!"
     exit 1
 fi
@@ -68,7 +69,7 @@ serverKey=$(<"$VDMHOME/ip.key")
 accessToke=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36"  --silent --data-urlencode "key=$serverKey" $VDMIPSERVER)
 
 if [[ "$accessToke" != "$TRUE" ]]; then
-	read -s -p "Please enter your VDM access key: " vdmAccessKey
+	read -n 1 -s -p "Please enter your VDM access key: " vdmAccessKey
 	echo
 	echo -n "One moment while we set your access to the VDM system..."
 	resultAccess=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36"  --silent --data-urlencode "trust=$vdmAccessKey" --data-urlencode  "key=$serverKey" $VDMIPSERVER)
