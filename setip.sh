@@ -7,8 +7,8 @@ function getKey () {
 
 # Variables
 TRUE=1
-VDMUSER="llewellyn"
-VDMHOME="/home/llewellyn"
+VDMUSER="vdm"
+VDMHOME="/home/vdm"
 VDMSCRIPT="https://raw.githubusercontent.com/vdm-io/dynamic-ip/$BRANCH/setip.sh"
 VDMIPSERVER="https://www.vdm.io/setip"
 
