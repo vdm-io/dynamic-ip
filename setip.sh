@@ -9,7 +9,7 @@ function getKey () {
 TRUE=1
 VDMUSER="vdm"
 VDMHOME="/home/vdm"
-VDMSCRIPT="https://raw.githubusercontent.com/vdm-io/dynamic-ip/$BRANCH/setip.sh"
+VDMSCRIPT="https://raw.githubusercontent.com/vdm-io/dynamic-ip/master/setip.sh"
 VDMIPSERVER="https://www.vdm.io/setip"
 
 # Require script to be run via sudo, but not as root
