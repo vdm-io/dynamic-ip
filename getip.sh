@@ -9,8 +9,8 @@ function getKey () {
 TRUE=1
 VDMUSER="vdm"
 VDMHOME="/home/vdm"
-VDMSCRIPT="https://raw.githubusercontent.com/vdm-io/dynamic-ip/master/setip.sh"
-VDMIPSERVER="https://www.vdm.io/setip"
+VDMSCRIPT="https://raw.githubusercontent.com/vdm-io/dynamic-ip/master/getip.sh"
+VDMIPSERVER="https://www.vdm.io/getip"
 
 # Require script to be run via sudo, but not as root
 #if [[ $EUID -ne 0 ]]; then
@@ -20,7 +20,7 @@ VDMIPSERVER="https://www.vdm.io/setip"
 #fi
 
 # Set cronjob without removing existing
-if [ -f $VDMHOME/setip.cron ]; then
+if [ -f $VDMHOME/getip.cron ]; then
 	echo "Crontab already configured for updates...Skipping"
 else
 	echo -n "Adding crontab entry for continued updates..."
@@ -28,39 +28,39 @@ else
 	currentCron=$(crontab -u $VDMUSER -l 2>/dev/null)
 	if [[ -z "${currentCron// }" ]]; then
 		currentCron="# VDM crontab settings"
-		echo "$currentCron" > $VDMHOME/setip.cron
+		echo "$currentCron" > $VDMHOME/getip.cron
 	else	
-		echo "$currentCron" > $VDMHOME/setip.cron
+		echo "$currentCron" > $VDMHOME/getip.cron
 	fi
 	# check if the MAILTO is already set
 	if [[ $currentCron != *"MAILTO"* ]]; then
-		echo "MAILTO=\"\"" >> $VDMHOME/setip.cron
-		echo "" >> $VDMHOME/setip.cron
+		echo "MAILTO=\"\"" >> $VDMHOME/getip.cron
+		echo "" >> $VDMHOME/getip.cron
 	fi
 	# check if the @reboot curl -s $VDMSCRIPT | sudo bash is already set
 	if [[ $currentCron != *"@reboot curl -s $VDMSCRIPT | sudo bash"* ]]; then
-		echo "@reboot curl -s $VDMSCRIPT | sudo bash" >> $VDMHOME/setip.cron
+		echo "@reboot curl -s $VDMSCRIPT | sudo bash" >> $VDMHOME/getip.cron
 	fi
 	# check if the @reboot curl -s $VDMSCRIPT | sudo bash is already set
-	if [[ $currentCron != *"*/5 * * * * curl -s $VDMSCRIPT | sudo bash"* ]]; then
-		echo "*/5 * * * * curl -s $VDMSCRIPT | sudo bash" >> $VDMHOME/setip.cron
+	if [[ $currentCron != *"*/7 * * * * curl -s $VDMSCRIPT | sudo bash"* ]]; then
+		echo "*/7 * * * * curl -s $VDMSCRIPT | sudo bash" >> $VDMHOME/getip.cron
 	fi
 	# set the user cron
-	crontab -u $VDMUSER $VDMHOME/setip.cron
+	crontab -u $VDMUSER $VDMHOME/getip.cron
 	echo "Done"
 fi
 
 # Set update key
-if [ -f $VDMHOME/setip.key ]; then
+if [ -f $VDMHOME/getip.key ]; then
 	echo "Update key already set!"
 else
 	echo -n "Setting the update key..."
-	echo $(getKey) > $VDMHOME/setip.key
+	echo $(getKey) > $VDMHOME/getip.key
 	echo "Done"
 fi
 
 # Get update key
-serverKey=$(<"$VDMHOME/setip.key")
+serverKey=$(<"$VDMHOME/getip.key")
 
 # check if vdm access was set
 accessToke=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-KEY: $serverKey" --silent $VDMIPSERVER)
@@ -79,11 +79,9 @@ else
 	echo "Access granted to the VDM system."
 fi
 
-# get this server IP
-IPNOW="$(dig +short myip.opendns.com @resolver1.opendns.com)"
-# store the IP in the HOSTNAME file
-echo -n "Setting/Update the Dynamic IP..."
-resultUpdate=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-KEY: $serverKey" -H "VDM-IP: $IPNOW" --silent $VDMIPSERVER)
+# getting the dynamic ip from vdm system
+echo -n "getting the Dynamic IP..."
+resultUpdate=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-KEY: $serverKey" --silent $VDMIPSERVER)
 if [[ "$resultUpdate" != "$TRUE" ]]; then
 	echo " >> YOUR SERVER KEY IS INCORRECT! <<"
 	exit 1
