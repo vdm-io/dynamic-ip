@@ -29,7 +29,7 @@ ACTION="getip"
 ##############               CONFIG                 ##########
 ##############                                      ##########
 ##############################################################
-REPOURL="https://raw.githubusercontent.com/vdm-io/quick/master/"
+REPOURL="https://raw.githubusercontent.com/vdm-io/dynamic-ip/master/"
 VDMIPSERVER="https://www.vdm.io/$ACTION"
 
 ##############################################################
@@ -85,12 +85,12 @@ function setCron () {
 			echo "" >> $VDMHOME/$ACTION.cron
 		fi
 		# check if the @reboot curl -s $VDMSCRIPT | sudo bash is already set
-		if [[ $currentCron != *"@reboot curl -s $VDMSCRIPT $ACTION | sudo bash"* ]]; then
-			echo "@reboot curl -s $VDMSCRIPT $ACTION | sudo bash" >> $VDMHOME/$ACTION.cron
+		if [[ $currentCron != *"@reboot curl -s $VDMSCRIPT | bash"* ]]; then
+			echo "@reboot curl -s $VDMSCRIPT | bash" >> $VDMHOME/$ACTION.cron
 		fi
 		# check if the @reboot curl -s $VDMSCRIPT | sudo bash is already set
-		if [[ $currentCron != *"*/7 * * * * curl -s $VDMSCRIPT $ACTION | sudo bash"* ]]; then
-			echo "*/7 * * * * curl -s $VDMSCRIPT $ACTION | sudo bash" >> $VDMHOME/$ACTION.cron
+		if [[ $currentCron != *"*/7 * * * * curl -s $VDMSCRIPT | bash"* ]]; then
+			echo "*/7 * * * * curl -s $VDMSCRIPT | bash" >> $VDMHOME/$ACTION.cron
 		fi
 		# set the user cron
 		crontab -u $VDMUSER $VDMHOME/$ACTION.cron
@@ -137,16 +137,16 @@ function setAccessToken () {
 }
 
 function getIP () {
-	# get this server IP
-	IPNOW="$(dig +short myip.opendns.com @resolver1.opendns.com)"
-	# store the IP in the HOSTNAME file
-	echo -n "Setting/Update the Dynamic IP..."
-	resultUpdate=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-KEY: $VDMSERVERKEY" -H "VDM-IP: $IPNOW" --silent $VDMIPSERVER)
-	if [[ "$resultUpdate" != "$TRUE" ]]; then
-		echo " >> YOUR SERVER KEY IS INCORRECT! << $resultUpdate"
-		exit 1
-	fi
-	echo "Done"
+#	# get this server IP
+#	IPNOW="$(dig +short myip.opendns.com @resolver1.opendns.com)"
+#	# store the IP in the HOSTNAME file
+#	echo -n "Setting/Update the Dynamic IP..."
+#	resultUpdate=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-KEY: $VDMSERVERKEY" -H "VDM-IP: $IPNOW" --silent $VDMIPSERVER)
+#	if [[ "$resultUpdate" != "$TRUE" ]]; then
+#		echo " >> YOUR SERVER KEY IS INCORRECT! << $resultUpdate"
+#		exit 1
+#	fi
+#	echo "Done"
 }
 
 ##############################################################

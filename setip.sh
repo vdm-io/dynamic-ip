@@ -29,7 +29,7 @@ ACTION="setip"
 ##############               CONFIG                 ##########
 ##############                                      ##########
 ##############################################################
-REPOURL="https://raw.githubusercontent.com/vdm-io/quick/master/"
+REPOURL="https://raw.githubusercontent.com/vdm-io/dynamic-ip/master/"
 VDMIPSERVER="https://www.vdm.io/$ACTION"
 
 ##############################################################
