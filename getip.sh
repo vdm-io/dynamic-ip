@@ -38,14 +38,18 @@ VDMIPSERVER="https://www.vdm.io/$ACTION"
 ##############                                      ##########
 ##############################################################
 function main () {
+	# get this server IP
+	HOSTIP="$(dig +short myip.opendns.com @resolver1.opendns.com)"
 	## make sure cron is set
 	setCron
 	## get the local server key
 	getLocalKey
 	## check access (set if not ready)
 	setAccessToken
-	## update IP
-	getIP
+	## get the IPs
+	getIPs
+	## check the IPs and then set
+	setDNS
 }
 
 ##############################################################
@@ -58,6 +62,9 @@ VDMHOME=~/
 VDMSCRIPT="${REPOURL}$ACTION.sh"
 VDMSERVERKEY=''
 TRUE=1
+FALSE=0
+HOSTIP=''
+THEIPS=''
 
 ##############################################################
 ##############                                      ##########
@@ -119,13 +126,13 @@ function getLocalKey () {
 
 function setAccessToken () {
 	# check if vdm access was set
-	accessToke=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-KEY: $VDMSERVERKEY" --silent $VDMIPSERVER)
+	accessToke=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-KEY: $VDMSERVERKEY" -H "VDM-HOST-IP: $HOSTIP" --silent $VDMIPSERVER)
 
 	if [[ "$accessToke" != "$TRUE" ]]; then
 		read -s -p "Please enter your VDM access key: " vdmAccessKey
 		echo ""
 		echo -n "One moment while we set your access to the VDM system..."
-		resultAccess=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-TRUST: $vdmAccessKey" -H "VDM-KEY: $VDMSERVERKEY" --silent $VDMIPSERVER)
+		resultAccess=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-TRUST: $vdmAccessKey" -H "VDM-KEY: $VDMSERVERKEY" -H "VDM-HOST-IP: $HOSTIP" --silent $VDMIPSERVER)
 		if [[ "$resultAccess" != "$TRUE" ]]; then
 			echo " >> YOUR VDM ACCESS KEY IS INCORRECT! << $resultAccess"
 			exit 1
@@ -136,17 +143,63 @@ function setAccessToken () {
 	fi
 }
 
-function getIP () {
-#	# get this server IP
-#	IPNOW="$(dig +short myip.opendns.com @resolver1.opendns.com)"
-#	# store the IP in the HOSTNAME file
-#	echo -n "Setting/Update the Dynamic IP..."
-#	resultUpdate=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-KEY: $VDMSERVERKEY" -H "VDM-IP: $IPNOW" --silent $VDMIPSERVER)
-#	if [[ "$resultUpdate" != "$TRUE" ]]; then
-#		echo " >> YOUR SERVER KEY IS INCORRECT! << $resultUpdate"
-#		exit 1
-#	fi
-#	echo "Done"
+function getIPs () {
+	# store the IP in the HOSTNAME file
+	echo -n "Getting the Dynamic IPs..."
+	THEIPS=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-KEY: $VDMSERVERKEY" -H "VDM-HOST-IP: $HOSTIP"  -H "VDM-GET: 1" --silent $VDMIPSERVER)
+	# the IPs
+	if [[ "$THEIPS" == "$FALSE" || ${#THEIPS} -lt 15 ]]; then
+		echo " >> No IPs FOUND! << "
+		exit 1
+	fi
+	echo "Done"
+}
+
+function setDNS () {
+	# check IPS
+	readarray -t rows <<< "$THEIPS"
+	for rr in "${rows[@]}" ; do
+		row=( $rr )
+		if [[ ${#row[@]} == 3 ]]; then
+			# first check IP
+			echo -n "Checking the Dynamic IP..."
+			if [[ "${row[2]}" =~ ^([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})$ ]]
+			then
+				for (( i=1; i<${#BASH_REMATCH[@]}; ++i ))
+				do
+					if (( ${BASH_REMATCH[$i]} > 255 )); then
+						echo " >> bad IP << "
+						continue
+					fi
+				done
+			else
+				echo " >> bad IP << "
+				continue
+			fi
+			echo "Done"
+			echo -n "Checking local DNS file..."
+			# check if the DNS file is found (CENTOS)
+			DNSfile=0
+			if [ -f "/var/named/${row[1]}.${row[0]}.db" ] 
+			then
+				DNSfile=2
+			elif [ -f "/var/named/${row[0]}.db" ]
+			then
+				DNSfile=1				
+			fi
+			# confirm that it was found
+			if [[ "$DNSfile" == 0 ]]
+			then
+				echo " >> not found << "
+				continue				
+			fi
+			echo "Done"
+			# now add the IP A record if needed
+			echo -n "Update DNS now.."
+
+			echo "done"
+		fi
+	done
 }
 
 ##############################################################
