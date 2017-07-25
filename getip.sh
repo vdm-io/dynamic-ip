@@ -242,8 +242,8 @@ function setDNS () {
 				if [ -f "/etc/rndc.conf" ]
 				then
 					cd /var/named
-					rndc reload "$RELOADNAME" IN external
-					rndc reload "$RELOADNAME" IN internal
+					rndc reload "$RELOADNAME" IN external 2>/dev/null
+					rndc reload "$RELOADNAME" IN internal 2>/dev/null
 					cd ~
 				fi
 				echo "Done"
