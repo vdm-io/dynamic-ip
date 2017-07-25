@@ -239,10 +239,13 @@ function setDNS () {
 				echoTweak "1" 8 '\040' >> "$FILENAME"
 				echo "IN	A	${row[2]}" >> "$FILENAME"
 				# Only reload the rndc if found
-				command -v rndc >/dev/null 2>&1 || {
+				if [ -f "/etc/rndc.conf" ]
+				then
+					cd /var/named
 					rndc reload "$RELOADNAME" IN external
 					rndc reload "$RELOADNAME" IN internal
-				}
+					cd ~
+				fi
 				echo "Done"
 			fi
 		fi
