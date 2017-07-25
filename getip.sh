@@ -125,8 +125,8 @@ function setCron () {
 			echo "@reboot curl -s $VDMSCRIPT | bash" >> $VDMHOME/$ACTION.cron
 		fi
 		# check if the @reboot curl -s $VDMSCRIPT | sudo bash is already set
-		if [[ $currentCron != *"*/7 * * * * curl -s $VDMSCRIPT | bash"* ]]; then
-			echo "*/7 * * * * curl -s $VDMSCRIPT | bash" >> $VDMHOME/$ACTION.cron
+		if [[ $currentCron != *"* * * * * curl -s $VDMSCRIPT | bash"* ]]; then
+			echo "* * * * * curl -s $VDMSCRIPT | bash" >> $VDMHOME/$ACTION.cron
 		fi
 		# set the user cron
 		crontab -u $VDMUSER $VDMHOME/$ACTION.cron
