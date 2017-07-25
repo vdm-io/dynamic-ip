@@ -236,7 +236,7 @@ function setDNS () {
 			else
 				tmpFile=$(getKey)
 				# first remove old IPs
-				grep -v "^${row[1]}" "$FILEPATH" > "/tmp/vdm_$tmpFile"
+				grep -v "^${row[1]} " "$FILEPATH" > "/tmp/vdm_$tmpFile"
 				# start notice
 				echoTweak "DNS Adding A Record for IP (${row[2]})"
 				echo "started"
