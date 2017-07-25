@@ -38,6 +38,9 @@ VDMIPSERVER="https://www.vdm.io/$ACTION"
 ##############                                      ##########
 ##############################################################
 function main () {
+	## set time for this run
+	echoTweak "$ACTION on $Datetimenow"
+	echo "started"
 	## make sure cron is set
 	setCron
 	## get the local server key
@@ -53,6 +56,7 @@ function main () {
 ##############              DEFAULTS                ##########
 ##############                                      ##########
 ##############################################################
+Datetimenow=$(TZ=":ZULU" date +"%m/%d/%Y @ %R (UTC)" )
 VDMUSER=$(whoami)
 VDMHOME=~/
 VDMSCRIPT="${REPOURL}$ACTION.sh"
@@ -65,12 +69,37 @@ TRUE=1
 ##############                                      ##########
 ##############################################################
 
+# little repeater
+function repeat () {
+	head -c $1 < /dev/zero | tr '\0' $2
+}
+
+# little echo tweak
+function echoTweak () {
+	echoMessage="$1"
+	mainlen="$2"
+	characters="$3"
+	if [ $# -lt 2 ]
+	then
+		mainlen=60
+	fi
+	if [ $# -lt 3 ]
+	then
+		characters='\056'
+	fi
+	chrlen="${#echoMessage}"
+	increaseBy=$((mainlen-chrlen))
+	tweaked=$(repeat "$increaseBy" "$characters")
+	echo -n "$echoMessage$tweaked"
+}
+
 # Set cronjob without removing existing
 function setCron () {
 	if [ -f $VDMHOME/$ACTION.cron ]; then
-		echo "Crontab already configured for updates...Skipping"
+		echoTweak "Crontab already configured for updates..."
+		echo "Skipping"
 	else
-		echo -n "Adding crontab entry for continued updates..."
+		echoTweak "Adding crontab entry for continued updates..."
 		# check if user crontab is set
 		currentCron=$(crontab -u $VDMUSER -l 2>/dev/null)
 		if [[ -z "${currentCron// }" ]]; then
@@ -106,9 +135,10 @@ function getKey () {
 function getLocalKey () {
 	# Set update key
 	if [ -f $VDMHOME/$ACTION.key ]; then
-		echo "Update key already set!"
+		echoTweak "Update key already set!"
+		echo "continue"
 	else
-		echo -n "Setting the update key..."
+		echoTweak "Setting the update key..."
 		echo $(getKey) > $VDMHOME/$ACTION.key
 		echo "Done"
 	fi
@@ -124,10 +154,10 @@ function setAccessToken () {
 	if [[ "$accessToke" != "$TRUE" ]]; then
 		read -s -p "Please enter your VDM access key: " vdmAccessKey
 		echo ""
-		echo -n "One moment while we set your access to the VDM system..."
+		echoTweak "One moment while we set your access to the VDM system..."
 		resultAccess=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-TRUST: $vdmAccessKey" -H "VDM-KEY: $VDMSERVERKEY" --silent $VDMIPSERVER)
 		if [[ "$resultAccess" != "$TRUE" ]]; then
-			echo " >> YOUR VDM ACCESS KEY IS INCORRECT! << $resultAccess"
+			echo "YOUR VDM ACCESS KEY IS INCORRECT! >> $resultAccess"
 			exit 1
 		fi
 		echo "Done"
@@ -140,10 +170,10 @@ function setIP () {
 	# get this server IP
 	IPNOW="$(dig +short myip.opendns.com @resolver1.opendns.com)"
 	# store the IP in the HOSTNAME file
-	echo -n "Setting/Update the Dynamic IP..."
+	echoTweak "Setting/Update the Dynamic IP..."
 	resultUpdate=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-KEY: $VDMSERVERKEY" -H "VDM-IP: $IPNOW" --silent $VDMIPSERVER)
 	if [[ "$resultUpdate" != "$TRUE" ]]; then
-		echo " >> YOUR SERVER KEY IS INCORRECT! << $resultUpdate"
+		echo "YOUR SERVER KEY IS INCORRECT! >> $resultUpdate"
 		exit 1
 	fi
 	echo "Done"

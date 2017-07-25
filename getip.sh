@@ -38,6 +38,9 @@ VDMIPSERVER="https://www.vdm.io/$ACTION"
 ##############                                      ##########
 ##############################################################
 function main () {
+	## set time for this run
+	echoTweak "$ACTION on $Datetimenow"
+	echo "started"
 	# get this server IP
 	HOSTIP="$(dig +short myip.opendns.com @resolver1.opendns.com)"
 	## make sure cron is set
@@ -57,6 +60,7 @@ function main () {
 ##############              DEFAULTS                ##########
 ##############                                      ##########
 ##############################################################
+Datetimenow=$(TZ=":ZULU" date +"%m/%d/%Y @ %R (UTC)" )
 VDMUSER=$(whoami)
 VDMHOME=~/
 VDMSCRIPT="${REPOURL}$ACTION.sh"
@@ -72,12 +76,37 @@ THEIPS=''
 ##############                                      ##########
 ##############################################################
 
+# little repeater
+function repeat () {
+	head -c $1 < /dev/zero | tr '\0' $2
+}
+
+# little echo tweak
+function echoTweak () {
+	echoMessage="$1"
+	mainlen="$2"
+	characters="$3"
+	if [ $# -lt 2 ]
+	then
+		mainlen=60
+	fi
+	if [ $# -lt 3 ]
+	then
+		characters='\056'
+	fi
+	chrlen="${#echoMessage}"
+	increaseBy=$((mainlen-chrlen))
+	tweaked=$(repeat "$increaseBy" "$characters")
+	echo -n "$echoMessage$tweaked"
+}
+
 # Set cronjob without removing existing
 function setCron () {
 	if [ -f $VDMHOME/$ACTION.cron ]; then
-		echo "Crontab already configured for updates...Skipping"
+		echoTweak "Crontab already configured for updates..."
+		echo "Skipping"
 	else
-		echo -n "Adding crontab entry for continued updates..."
+		echoTweak "Adding crontab entry for continued updates..."
 		# check if user crontab is set
 		currentCron=$(crontab -u $VDMUSER -l 2>/dev/null)
 		if [[ -z "${currentCron// }" ]]; then
@@ -113,9 +142,10 @@ function getKey () {
 function getLocalKey () {
 	# Set update key
 	if [ -f $VDMHOME/$ACTION.key ]; then
-		echo "Update key already set!"
+		echoTweak "Update key already set!"
+		echo "continue"
 	else
-		echo -n "Setting the update key..."
+		echoTweak "Setting the update key..."
 		echo $(getKey) > $VDMHOME/$ACTION.key
 		echo "Done"
 	fi
@@ -131,25 +161,26 @@ function setAccessToken () {
 	if [[ "$accessToke" != "$TRUE" ]]; then
 		read -s -p "Please enter your VDM access key: " vdmAccessKey
 		echo ""
-		echo -n "One moment while we set your access to the VDM system..."
+		echoTweak "One moment while we set your access to the VDM system..."
 		resultAccess=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-TRUST: $vdmAccessKey" -H "VDM-KEY: $VDMSERVERKEY" -H "VDM-HOST-IP: $HOSTIP" --silent $VDMIPSERVER)
 		if [[ "$resultAccess" != "$TRUE" ]]; then
-			echo " >> YOUR VDM ACCESS KEY IS INCORRECT! << $resultAccess"
+			echo "YOUR VDM ACCESS KEY IS INCORRECT! >> $resultAccess"
 			exit 1
 		fi
 		echo "Done"
 	else
-		echo "Access granted to the VDM system."
+		echoTweak "Access granted to the VDM system."
+		echo "Done"
 	fi
 }
 
 function getIPs () {
 	# store the IP in the HOSTNAME file
-	echo -n "Getting the Dynamic IPs..."
+	echoTweak "Getting the Dynamic IPs..."
 	THEIPS=$(curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -H "VDM-KEY: $VDMSERVERKEY" -H "VDM-HOST-IP: $HOSTIP"  -H "VDM-GET: 1" --silent $VDMIPSERVER)
 	# the IPs
 	if [[ "$THEIPS" == "$FALSE" || ${#THEIPS} -lt 15 ]]; then
-		echo " >> No IPs FOUND! << "
+		echo "No IPs FOUND! "
 		exit 1
 	fi
 	echo "Done"
@@ -162,42 +193,58 @@ function setDNS () {
 		row=( $rr )
 		if [[ ${#row[@]} == 3 ]]; then
 			# first check IP
-			echo -n "Checking the Dynamic IP..."
+			echoTweak "Checking the Dynamic IP..."
 			if [[ "${row[2]}" =~ ^([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})$ ]]
 			then
 				for (( i=1; i<${#BASH_REMATCH[@]}; ++i ))
 				do
 					if (( ${BASH_REMATCH[$i]} > 255 )); then
-						echo " >> bad IP << "
+						echo "bad IP"
 						continue
 					fi
 				done
 			else
-				echo " >> bad IP << "
+				echo "bad IP"
 				continue
 			fi
 			echo "Done"
-			echo -n "Checking local DNS file..."
+			echoTweak "Checking local DNS file..."
 			# check if the DNS file is found (CENTOS)
-			DNSfile=0
+			FILENAME=0
 			if [ -f "/var/named/${row[1]}.${row[0]}.db" ] 
 			then
-				DNSfile=2
+				FILENAME="/var/named/${row[1]}.${row[0]}.db"
+				RELOADNAME="${row[1]}.${row[0]}"
 			elif [ -f "/var/named/${row[0]}.db" ]
 			then
-				DNSfile=1				
+				FILENAME="/var/named/${row[0]}.db"
+				RELOADNAME="${row[0]}"
 			fi
 			# confirm that it was found
-			if [[ "$DNSfile" == 0 ]]
+			if [[ "$FILENAME" == 0 ]]
 			then
-				echo " >> not found << "
+				echo "not found"
 				continue				
 			fi
 			echo "Done"
 			# now add the IP A record if needed
-			echo -n "Update DNS now.."
-
-			echo "done"
+			echoTweak "Update DNS now.."
+			if grep -Fq "${row[2]}" "$FILENAME"
+			then
+				# IP already set
+				echo "IP (${row[2]}) already set"
+			else
+				# code if not found
+				echoTweak "${row[1]}" 16 '\040' >> "$FILENAME"
+				echoTweak "1" 8 '\040' >> "$FILENAME"
+				echo "IN	A	${row[2]}" >> "$FILENAME"
+				# Only reload the rndc if found
+				command -v rndc >/dev/null 2>&1 || {
+					rndc reload "$RELOADNAME" IN external
+					rndc reload "$RELOADNAME" IN internal
+				}
+				echo "Done"
+			fi
 		fi
 	done
 }
