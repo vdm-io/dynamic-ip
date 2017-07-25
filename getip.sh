@@ -210,43 +210,62 @@ function setDNS () {
 			echo "Done"
 			echoTweak "Checking local DNS file..."
 			# check if the DNS file is found (CENTOS)
-			FILENAME=0
+			FILEPATH=0
 			if [ -f "/var/named/${row[1]}.${row[0]}.db" ] 
 			then
-				FILENAME="/var/named/${row[1]}.${row[0]}.db"
-				RELOADNAME="${row[1]}.${row[0]}"
+				FILEPATH="/var/named/${row[1]}.${row[0]}.db"
+				FILENAME="${row[1]}.${row[0]}"
 			elif [ -f "/var/named/${row[0]}.db" ]
 			then
-				FILENAME="/var/named/${row[0]}.db"
-				RELOADNAME="${row[0]}"
+				FILEPATH="/var/named/${row[0]}.db"
+				FILENAME="${row[0]}"
 			fi
 			# confirm that it was found
-			if [[ "$FILENAME" == 0 ]]
+			if [[ "$FILEPATH" == 0 ]]
 			then
 				echo "not found"
 				continue				
 			fi
 			echo "Done"
 			# now add the IP A record if needed
-			echoTweak "Update DNS now.."
-			if grep -Fq "${row[2]}" "$FILENAME"
+			if grep -Fq "${row[2]}" "$FILEPATH"
 			then
 				# IP already set
-				echo "IP (${row[2]}) already set"
+				echoTweak "DNS IP (${row[2]})..."
+				echo "already set"
 			else
-				# code if not found
-				echoTweak "${row[1]}" 16 '\040' >> "$FILENAME"
-				echoTweak "1" 8 '\040' >> "$FILENAME"
-				echo "IN	A	${row[2]}" >> "$FILENAME"
+				tmpFile=$(getKey)
+				# first remove old IPs
+				grep -v "^${row[1]}" "$FILEPATH" > "/tmp/vdm_$tmpFile"
+				# start notice
+				echoTweak "DNS Adding A Record for IP (${row[2]})"
+				echo "started"
+				# add new a record to tmp file
+				echoTweak "${row[1]}" 16 '\040' >> "/tmp/vdm_$tmpFile"
+				echoTweak "1" 8 '\040' >> "/tmp/$tmpFile"
+				echo "IN	A	${row[2]}" >> "/tmp/vdm_$tmpFile"
+				# add new a record to zone file
+				mv "/tmp/vdm_$tmpFile" "$FILEPATH"
+				#remove tmp file
+				# rm "/tmp/vdm_$tmpFile"
 				# Only reload the rndc if found
 				if [ -f "/etc/rndc.conf" ]
 				then
 					cd /var/named
-					rndc reload "$RELOADNAME" IN external 2>/dev/null
-					rndc reload "$RELOADNAME" IN internal 2>/dev/null
+					echoTweak "reload $FILENAME IN external"
+					rndc reload "$FILENAME" IN external 2>/dev/null
+					echoTweak "reload $FILENAME IN internal"
+					rndc reload "$FILENAME" IN internal 2>/dev/null
+					echoTweak "notify $FILENAME IN external"
+					rndc notify "$FILENAME" IN external 2>/dev/null
+					echoTweak "notify $FILENAME IN internal"
+					rndc notify "$FILENAME" IN internal 2>/dev/null
+					echoTweak "refresh $FILENAME IN external"
+					rndc refresh "$FILENAME" IN external 2>/dev/null
+					echoTweak "refresh $FILENAME IN internal"
+					rndc refresh "$FILENAME" IN internal 2>/dev/null
 					cd ~
 				fi
-				echo "Done"
 			fi
 		fi
 	done
