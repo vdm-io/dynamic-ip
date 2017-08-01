@@ -242,7 +242,7 @@ function setDNS () {
 				echo "started"
 				# add new a record to tmp file
 				echoTweak "${row[1]}" 16 '\040' >> "/tmp/vdm_$tmpFile"
-				echoTweak "1" 8 '\040' >> "/tmp/$tmpFile"
+				echoTweak "1" 8 '\040' >> "/tmp/vdm_$tmpFile"
 				echo "IN	A	${row[2]}" >> "/tmp/vdm_$tmpFile"
 				# add new a record to zone file
 				mv "/tmp/vdm_$tmpFile" "$FILEPATH"
