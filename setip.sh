@@ -58,10 +58,13 @@ function main () {
 ##############################################################
 Datetimenow=$(TZ=":ZULU" date +"%m/%d/%Y @ %R (UTC)" )
 VDMUSER=$(whoami)
-VDMHOME=~/
+VDMHOME=~/.local/dynamic-ip
 VDMSCRIPT="${REPOURL}$ACTION.sh"
 VDMSERVERKEY=''
 TRUE=1
+
+###### Make sure the local folder is created #################
+mkdir -p "$VDMHOME"
 
 ##############################################################
 ##############                                      ##########
